@@ -34,7 +34,7 @@ class Subject():
     @classmethod
     def get_json(self):
 	    info = []
-	    for i in range(100):
+	    for i in range(50):
 		    info.append( {
 			    "visit_notify": self.visit_notify,
 			    "password_reseted": random.choice([True, False]),
@@ -42,7 +42,7 @@ class Subject():
 			    "title": self.subject_id,
 			    "subject_type": random.randint(0,1),
 			    "job_number": random.randint(1,1000),
-			    "name": ''.join(random.sample('abcdefghik', 10)),
+			    "name": ''.join(random.sample('abcdefghijk', 3)),
 			    "come_from": self.come_from,
 			    "purpose": self.purpose,
 			    "id": self.id,
