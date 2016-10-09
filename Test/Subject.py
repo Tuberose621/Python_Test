@@ -35,17 +35,18 @@ class Subject():
     def get_json(self):
 	    info = []
 	    for i in range(50):
-		    info.append( {
-			    "visit_notify": self.visit_notify,
-			    "password_reseted": random.choice([True, False]),
+			info.append( {
+				"visit_notify": self.visit_notify,
+				"password_reseted": random.choice([True, False]),
 			    "birthday": self.birthday,
 			    "title": self.subject_id,
 			    "subject_type": random.randint(0,1),
 			    "job_number": random.randint(1,1000),
-			    "name": ''.join(random.sample('abcdefghijk', 3)),
+			    "name": ''.join(random.sample(['葛','媚','琳','康','雪','欣','乐','林','苏','曹','岑','欢','红','纯','莹','科'], 3)),
+			    # "name": random.choice(['葛聪颖', '林乐', '叶赛尔']),
 			    "come_from": self.come_from,
 			    "purpose": self.purpose,
-			    "id": self.id,
+			    "id": random.randint(1,100000),
 			    "company_id": self.company_id,
 			    "department": self.department,
 			    "email": self.email,
