@@ -12,7 +12,6 @@ from constants import SubjectType, Gender, VisitorPurpose
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_script import Shell, Manager
 
-
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
@@ -21,46 +20,56 @@ app.config['SQLALCHEMY_DATABASE_URI'] = \
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 db = SQLAlchemy(app)
-manage = Manager(app)
 
 
+manager = Manager(app)
 
-class Subjects(db.Model):
-	__tablename__ = 'subjects'
+def make_shell_context():
+	return dict(app=app, db=db, User=User, Role=Role)
+manager.add_command("shell", Shell(make_context=make_shell_context))
+
+class Role(db.Model):
+	__tablename__ = 'roles'
 	id = db.Column(db.Integer, primary_key=True)
-	subject_type = db.Column(db.SmallInteger, nullable=False, default=SubjectType.TYPE_EMPLOYEE)
-	create_time = db.Column(db.Integer, server_default='0')
+	name = db.Column(db.String(64), unique=True)
 	
-	email = db.Column(db.String(64), default='')
-	password_hash = db.Column(db.String(256), nullable=False)
-	password_reseted = db.Column(db.Boolean, default=False)
-	
-	real_name = db.Column(db.String(64), nullable=False, index=True)
-	pinyin = db.Column(db.String(128), nullable=False)
-	gender = db.Column(db.SmallInteger, default=Gender.MALE)
-	phone = db.Column(db.String(20), default='')
-	avatar = db.Column(db.String(256), default='')
-	department = db.Column(db.String(256), default='')
-	department_pinyin = db.Column(db.String(512), default='')
-	title = db.Column(db.String(64), default='')
-	description = db.Column(db.String(128), default='')
-	mobile_os = db.Column(db.Integer)
-	birthday = db.Column(db.Date)
-	entry_date = db.Column(db.Date)
-	
-	job_number = db.Column(db.String(64), default='')
-	remark = db.Column(db.String(128), default='')
-	
-	# visitor info
-	purpose = db.Column(db.Integer, default=VisitorPurpose.OTHER)
-	interviewee = db.Column(db.String(20), default='')
-	interviewee_pinyin = db.Column(db.String(128), default='')
-	come_from = db.Column(db.String(128), default='')
-	visited = db.Column(db.Boolean, default=False)
-	visit_notify = db.Column(db.Boolean, default=False)
-	
-	start_time = db.Column(db.Integer)
-	end_time = db.Column(db.Integer)
+	def __repr__(self):
+		return '<Role %r>' % self.name
+	users = db.relationship('User', backref='role', lazy='dynamic')
+	#
+	# subject_type = db.Column(db.SmallInteger, nullable=False, default=SubjectType.TYPE_EMPLOYEE)
+	# create_time = db.Column(db.Integer, server_default='0')
+	#
+	# email = db.Column(db.String(64), default='')
+	# password_hash = db.Column(db.String(256), nullable=False)
+	# password_reseted = db.Column(db.Boolean, default=False)
+	#
+	# real_name = db.Column(db.String(64), nullable=False, index=True)
+	# pinyin = db.Column(db.String(128), nullable=False)
+	# gender = db.Column(db.SmallInteger, default=Gender.MALE)
+	# phone = db.Column(db.String(20), default='')
+	# avatar = db.Column(db.String(256), default='')
+	# department = db.Column(db.String(256), default='')
+	# department_pinyin = db.Column(db.String(512), default='')
+	# title = db.Column(db.String(64), default='')
+	# description = db.Column(db.String(128), default='')
+	# mobile_os = db.Column(db.Integer)
+	# birthday = db.Column(db.Date)
+	# entry_date = db.Column(db.Date)
+	#
+	# job_number = db.Column(db.String(64), default='')
+	# remark = db.Column(db.String(128), default='')
+	#
+	# # visitor info
+	# purpose = db.Column(db.Integer, default=VisitorPurpose.OTHER)
+	# interviewee = db.Column(db.String(20), default='')
+	# interviewee_pinyin = db.Column(db.String(128), default='')
+	# come_from = db.Column(db.String(128), default='')
+	# visited = db.Column(db.Boolean, default=False)
+	# visit_notify = db.Column(db.Boolean, default=False)
+	#
+	# start_time = db.Column(db.Integer)
+	# end_time = db.Column(db.Integer)
 	
 	# events = db.relationship('Event', backref='subject', lazy='dynamic', cascade='all')
 	# photos = db.relationship('Photo', backref='subject', lazy='select', cascade='all')
@@ -69,26 +78,26 @@ class Subjects(db.Model):
 	# visitors = db.relationship('Subject', backref=db.backref('inviter', remote_side=id),
 	#                            lazy='dynamic', cascade='all')
 	
-	def __repr__(self):
-		return '<Role %r>' % self.name
 
 
 class User(db.Model):
 	__tablename__ = 'users'
 	id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(64), nullable=False, index=True, unique=True)
-	password_hash = db.Column(db.String(256), nullable=False)
-	password_reseted = db.Column(db.Boolean, default=False)
-	reset_token = db.Column(db.String(64), default='')
-	
-	permission = db.Column(db.String(32), server_default='[]')
-	
-	avatar = db.Column(db.String(256))
-	remark = db.Column(db.String(256))
-	
 	
 	def __repr__(self):
 		return '<User %r>' % self.username
+	role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+	
+	#
+	# password_hash = db.Column(db.String(256), nullable=False)
+	# password_reseted = db.Column(db.Boolean, default=False)
+	# reset_token = db.Column(db.String(64), default='')
+	#
+	# permission = db.Column(db.String(32), server_default='[]')
+	#
+	# avatar = db.Column(db.String(256))
+	# remark = db.Column(db.String(256))
 
 
 def success_result(data={}, page={}):
@@ -140,11 +149,6 @@ def home():
 	return render_template('home.html')
 
 
-@app.route('/auth/login', methods=['GET'])
-def signin_form():
-	return render_template('form.html')
-
-
 @app.route('/auth/login', methods=['POST'])
 def signin():
 	username = request.form['username']
@@ -186,6 +190,11 @@ def signin():
 	return render_template('form.html', message='Bad username or password', username=username)
 
 
+@app.route('/auth/login', methods=['GET'])
+def signin_form():
+	return render_template('form.html')
+
+
 @app.route('/mobile-admin/subjects/list', methods=['GET'])
 def subjects():
 	print '------>', request
@@ -209,17 +218,18 @@ def subjects():
 
 if __name__ == '__main__':
 	app.run(host='169.254.215.161')
-	manage.run()
-	
+	manager.run()
 	
 	db.init_app(app)
 	db.create_all()
 	
 	db.session.commit()
 	print app.config['SQLALCHEMY_DATABASE_URI']
-	
 
-def _make_context():
-	return dict(db=db)
 
-manage.add_command("shell", Shell(make_context=_make_context))
+
+# def _make_context():
+# 	return dict(db=db)
+
+
+# manage.add_command("shell", Shell(make_context=_make_context))
